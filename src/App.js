@@ -87,6 +87,60 @@ export default function App() {
     setIsTyping(false);
   };
 
+  const handleSendVoice = async (audioBlob, duration) => {
+    console.log('🎤 App.js handleSendVoice called:', { audioBlob, duration, audioBlobSize: audioBlob?.size });
+    
+    // Create a voice message object
+    const voiceMessage = {
+      id: Date.now(),
+      sender: 'user',
+      text: `🎤 Voice message (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`,
+      audioBlob: audioBlob,
+      audioUrl: URL.createObjectURL(audioBlob),
+      isVoice: true,
+      duration: duration,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent'
+    };
+    
+    console.log('💬 Adding voice message to chat:', voiceMessage);
+    setMessages(prev => ({ ...prev, [activeChatId]: [...(prev[activeChatId] || []), voiceMessage] }));
+    setIsTyping(true);
+
+    // Simulate message status updates
+    setTimeout(() => {
+      setMessages(prev => ({
+        ...prev,
+        [activeChatId]: prev[activeChatId].map(msg => 
+          msg.id === voiceMessage.id ? { ...msg, status: 'delivered' } : msg
+        )
+      }));
+    }, 500);
+
+    setTimeout(() => {
+      setMessages(prev => ({
+        ...prev,
+        [activeChatId]: prev[activeChatId].map(msg => 
+          msg.id === voiceMessage.id ? { ...msg, status: 'read' } : msg
+        )
+      }));
+    }, 1000);
+
+    // For now, AI will respond to voice messages with a text acknowledgment
+    const aiText = await getGeminiResponse("The user just sent a voice message. Acknowledge that you received it and ask them to type their message or describe what they said briefly.");
+
+    const aiResponse = {
+      id: Date.now() + 1,
+      sender: 'ai',
+      text: aiText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'read'
+    };
+
+    setMessages(prev => ({ ...prev, [activeChatId]: [...prev[activeChatId], aiResponse] }));
+    setIsTyping(false);
+  };
+
   const handleSummarize = async () => {
     if (!messages[activeChatId] || messages[activeChatId].length === 0) return;
     setIsSummarizing(true);
@@ -126,6 +180,7 @@ export default function App() {
                     messages={messages[activeChatId] || []}
                     isTyping={isTyping}
                     onSendMessage={handleSendMessage}
+                    onSendVoice={handleSendVoice}
                     onSummarize={handleSummarize}
                     isSummarizing={isSummarizing}
                     onBack={() => setActiveChatId(null)}

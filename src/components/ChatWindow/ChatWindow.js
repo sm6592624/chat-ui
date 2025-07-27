@@ -3,7 +3,7 @@ import Header from './Header';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 
-const ChatWindow = ({ activeChat, messages, isTyping, onSendMessage, onSummarize, isSummarizing, onBack }) => {
+const ChatWindow = ({ activeChat, messages, isTyping, onSendMessage, onSendVoice, onSummarize, isSummarizing, onBack }) => {
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef(null);
 
@@ -15,6 +15,20 @@ const ChatWindow = ({ activeChat, messages, isTyping, onSendMessage, onSummarize
         if (inputValue.trim()) {
             onSendMessage(inputValue);
             setInputValue('');
+        }
+    };
+
+    const handleSendVoice = (audioBlob, duration) => {
+        console.log('🎯 ChatWindow: Received voice message', { 
+            audioBlob: !!audioBlob, 
+            duration, 
+            onSendVoiceExists: !!onSendVoice 
+        });
+        if (onSendVoice) {
+            console.log('🚀 ChatWindow: Forwarding to App.js');
+            onSendVoice(audioBlob, duration);
+        } else {
+            console.error('❌ ChatWindow: onSendVoice not provided');
         }
     };
     
@@ -88,6 +102,7 @@ const ChatWindow = ({ activeChat, messages, isTyping, onSendMessage, onSummarize
                 onChange={(e) => setInputValue(e.target.value)} 
                 onKeyDown={handleKeyDown} 
                 onSend={handleSend} 
+                onSendVoice={handleSendVoice}
                 isTyping={isTyping} 
             />
         </div>

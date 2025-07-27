@@ -31,9 +31,25 @@ const Message = ({ message }) => {
                         ? 'bg-primary-600 text-white rounded-br-md' 
                         : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-600'
                 }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {message.text}
-                    </p>
+                    {message.isVoice ? (
+                        <div className="space-y-2">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                {message.text}
+                            </p>
+                            {message.audioUrl && (
+                                <audio 
+                                    controls 
+                                    src={message.audioUrl} 
+                                    className={`w-full h-8 ${isUser ? 'audio-white' : 'audio-dark'}`}
+                                    style={{ maxWidth: '250px' }}
+                                />
+                            )}
+                        </div>
+                    ) : (
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                            {message.text}
+                        </p>
+                    )}
                     
                     <div className={`flex items-center justify-end mt-2 space-x-1 ${
                         isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'

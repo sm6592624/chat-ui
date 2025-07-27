@@ -63,4 +63,17 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: rgba(156, 163, 175, 0.8);
   }
+  
+  /* Audio player styling */
+  .audio-white audio {
+    filter: invert(1) brightness(2);
+  }
+  
+  .audio-dark audio {
+    filter: none;
+  }
+  
+  audio::-webkit-media-controls-panel {
+    background-color: transparent;
+  }
 }

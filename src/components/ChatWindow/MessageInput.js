@@ -1,8 +1,12 @@
-import React, { useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, Mic } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, Paperclip, Smile } from 'lucide-react';
+import EmojiPicker from '../common/EmojiPicker';
+import VoiceRecorder from '../common/VoiceRecorder';
 
-const MessageInput = ({ value, onChange, onKeyDown, onSend, isTyping }) => {
+const MessageInput = ({ value, onChange, onKeyDown, onSend, onSendVoice, isTyping }) => {
     const textareaRef = useRef(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -12,10 +16,74 @@ const MessageInput = ({ value, onChange, onKeyDown, onSend, isTyping }) => {
         }
     }, [value]);
 
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
+
     const handleSend = () => {
         if (value.trim() && !isTyping) {
             onSend();
         }
+    };
+
+    const handleEmojiSelect = (emoji) => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const newValue = value.slice(0, start) + emoji + value.slice(end);
+            
+            // Create a synthetic event to maintain consistency
+            const event = {
+                target: {
+                    value: newValue
+                }
+            };
+            
+            onChange(event);
+            
+            // Set cursor position after emoji
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+                textarea.focus();
+            }, 0);
+        }
+        setShowEmojiPicker(false);
+    };
+
+    const toggleEmojiPicker = () => {
+        setShowEmojiPicker(!showEmojiPicker);
+    };
+
+    // Voice recording handlers
+    const handleStartRecording = () => {
+        setIsRecording(true);
+        setShowEmojiPicker(false); // Close emoji picker when starting recording
+    };
+
+    const handleStopRecording = () => {
+        setIsRecording(false);
+    };
+
+    const handleSendVoice = (audioBlob, duration) => {
+        if (onSendVoice && audioBlob) {
+            onSendVoice(audioBlob, duration);
+        }
+        setIsRecording(false);
+    };
+
+    const handleCancelRecording = () => {
+        setIsRecording(false);
     };
 
     return (
@@ -28,7 +96,7 @@ const MessageInput = ({ value, onChange, onKeyDown, onSend, isTyping }) => {
                     <Paperclip className="h-5 w-5" />
                 </button>
                 
-                <div className="flex-1 relative">
+                <div className="flex-1 relative emoji-picker-container">
                     <textarea
                         ref={textareaRef}
                         className="w-full rounded-3xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-3 pr-12 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto transition-all duration-200"
@@ -42,11 +110,19 @@ const MessageInput = ({ value, onChange, onKeyDown, onSend, isTyping }) => {
                     />
                     
                     <button
+                        onClick={toggleEmojiPicker}
                         className="absolute right-3 bottom-3 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 text-gray-600 dark:text-gray-400"
                         aria-label="Add emoji"
                     >
                         <Smile className="h-4 w-4" />
                     </button>
+                    
+                    {/* Emoji Picker */}
+                    <EmojiPicker
+                        isOpen={showEmojiPicker}
+                        onEmojiSelect={handleEmojiSelect}
+                        onClose={() => setShowEmojiPicker(false)}
+                    />
                 </div>
                 
                 {value.trim() ? (
@@ -59,12 +135,13 @@ const MessageInput = ({ value, onChange, onKeyDown, onSend, isTyping }) => {
                         <Send className="h-5 w-5" />
                     </button>
                 ) : (
-                    <button
-                        className="w-12 h-12 flex items-center justify-center rounded-full bg-primary-600 hover:bg-primary-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                        aria-label="Record voice message"
-                    >
-                        <Mic className="h-5 w-5" />
-                    </button>
+                    <VoiceRecorder
+                        isRecording={isRecording}
+                        onStartRecording={handleStartRecording}
+                        onStopRecording={handleStopRecording}
+                        onSendVoice={handleSendVoice}
+                        onCancelRecording={handleCancelRecording}
+                    />
                 )}
             </div>
             
