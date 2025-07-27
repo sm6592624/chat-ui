@@ -21,6 +21,6 @@
     }
   ],
   "env": {
-    "REACT_APP_GEMINI_API_KEY": "@gemini_api_key"
+    "REACT_APP_GEMINI_API_KEY": ""
   }
 }
